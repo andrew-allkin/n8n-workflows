@@ -1,0 +1,182 @@
+{
+  "name": "Gmail Date Range Delete",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "start-date",
+              "name": "startDate",
+              "type": "string",
+              "value": "2024-06-30"
+            },
+            {
+              "id": "end-date",
+              "name": "endDate",
+              "type": "string",
+              "value": "2024-09-01"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-dates",
+      "name": "Set Date Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "q": "-label:Crossfit -label:Discovery -label:EasyEquities -label:\"Events 2025\" -label:\"Gap Cover\" -label:Genesis -label:Investec -label:Medical -label:\"Online Orders\" -label:Personal -label:\"PPS Income Protection\" -label:Sygnia -label:TymeBank",
+          "receivedAfter": "={{ $json.startDate }}",
+          "receivedBefore": "={{ $json.endDate }}"
+        }
+      },
+      "id": "get-messages",
+      "name": "Get Gmail Messages",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        304
+      ],
+      "webhookId": "87692ed6-d752-436c-aff1-a319e5378dd7",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "C9ZjVbHDXfAqL4tG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-emails",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-if-emails-exist",
+      "name": "Check If Emails Exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $json.id }}"
+      },
+      "id": "move-to-trash",
+      "name": "Delete Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        240
+      ],
+      "webhookId": "e1ee62b8-c29b-4380-bc59-ff68bba7ea89",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "C9ZjVbHDXfAqL4tG",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Set Date Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Date Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Gmail Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Gmail Messages": {
+      "main": [
+        [
+          {
+            "node": "Check If Emails Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Emails Exist": {
+      "main": [
+        [
+          {
+            "node": "Delete Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dbc109bd-e602-4d2b-9105-2d3464ff8cc9",
+  "meta": {
+    "instanceId": "18375a03649092e3bfcdb9e2ec29598b60dd0d2fd1167150aa9b0af170f2f4f3"
+  },
+  "id": "8wLE2miQH8HiZuPG",
+  "tags": []
+}
