@@ -82,7 +82,7 @@ products (product_id) ←────── order_items (product_id)
 ### Step 1: Start PostgreSQL Database
 
 ```bash
-cd text_to_sql
+cd text_to_sql_postgres_agent
 docker-compose up -d
 ```
 
@@ -306,7 +306,7 @@ conn = psycopg2.connect(
 ## 📁 Project Structure
 
 ```
-text_to_sql/
+text_to_sql_postgres_agent/
 ├── README.md                 # This file - complete documentation
 ├── system_prompt.md          # AI agent instructions (used in n8n)
 ├── chat_ui.html              # Custom chat interface with image support

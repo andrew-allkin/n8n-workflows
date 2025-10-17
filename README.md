@@ -29,7 +29,7 @@ A workflow for bulk-deleting Gmail messages within a specific date range while p
 ---
 
 ### 2. Text-to-SQL Agent for PostgreSQL
-**Location:** `text-to-sql-postgres-agent/`
+**Location:** `text_to_sql_postgres_agent/`
 
 An AI-powered natural language database query system that translates plain English questions into SQL queries.
 
@@ -47,7 +47,7 @@ An AI-powered natural language database query system that translates plain Engli
 - OpenAI API key
 - PostgreSQL database (uses the shared postgres-db container)
 
-[→ View detailed setup](./text-to-sql-postgres-agent/README.md)
+[→ View detailed setup](./text_to_sql_postgres_agent/README.md)
 
 ---
 
@@ -226,7 +226,7 @@ n8n-workflows/
 │   ├── Gmail Date Range Delete.json   # n8n workflow file
 │   └── README.md                      # Workflow-specific documentation
 │
-└── text-to-sql-postgres-agent/        # AI SQL query agent
+└── text_to_sql_postgres_agent/        # AI SQL query agent
     ├── n8n_workflow.json              # n8n workflow file
     ├── README.md                      # Workflow-specific documentation
     ├── agent_system_prompt.md         # AI agent instructions
