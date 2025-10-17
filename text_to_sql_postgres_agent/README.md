@@ -129,25 +129,124 @@ No manual network configuration is needed! 🎉
 
 #### Configure Credentials in n8n
 
-1. **Open n8n** and navigate to workflow ID: `zp9dO4iTVnEd2FeP`
+This workflow requires **two types of credentials**: OpenAI API for the AI agent and PostgreSQL for database access.
 
-2. **Configure OpenAI Credentials:**
-   - Click "OpenAI Chat Model" node
-   - Add your OpenAI API key from https://platform.openai.com/api-keys
-   - Save the credential
+**1. Configure OpenAI API Credentials**
 
-3. **Configure PostgreSQL Credentials:**
-   - Click any PostgreSQL tool node (e.g., "list_all_tables")
-   - Create new Postgres credential:
-     - **Host:** `postgres-db` (containers communicate via backend-net network)
-     - **Port:** `5432`
-     - **Database:** `test`
-     - **User:** `admin`
-     - **Password:** `adminpassword`
-   - Test connection and save
+The workflow uses GPT-4 to translate natural language into SQL queries.
 
-4. **Activate the Workflow:**
-   - Toggle the "Active" switch in top-right corner
+**A. Get Your OpenAI API Key**
+
+1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in or create an account
+3. Click **Create new secret key**
+4. Give it a name (e.g., "n8n text-to-sql")
+5. Copy the key immediately (you won't be able to see it again)
+6. **Important**: Ensure you have credits in your OpenAI account
+
+**B. Add to n8n**
+
+1. Open n8n at http://localhost:5678
+2. Navigate to **Settings** > **Credentials** (or click the credentials icon)
+3. Click **Add Credential** and search for **OpenAI API**
+4. Enter your API key in the **API Key** field
+5. (Optional) Set **Organization ID** if you have one
+6. Give it a name (e.g., "OpenAI account") and click **Save**
+
+**C. Assign to Workflow**
+
+1. Import or open the Text-to-SQL workflow
+2. Click on the **OpenAI Chat Model** node (red icon with "AI" label)
+3. In the **Credentials** dropdown, select the OpenAI credential you just created
+4. Save the workflow
+
+**Troubleshooting OpenAI:**
+- **"Incorrect API key"**: Verify you copied the full key without extra spaces
+- **"You exceeded your current quota"**: Add payment method and credits at https://platform.openai.com/account/billing
+- **"Rate limit exceeded"**: Your account has hit API rate limits - wait or upgrade your plan
+- **"Model not found"**: Ensure your API key has access to GPT-4 (check your OpenAI account tier)
+
+---
+
+**2. Configure PostgreSQL Database Credentials**
+
+The workflow needs access to your PostgreSQL database to execute queries.
+
+**A. Database Connection Details**
+
+Since both n8n and PostgreSQL run in Docker with the shared `backend-net` network:
+- **Host**: `postgres-db` (the service name, NOT localhost)
+- **Port**: `5432`
+- **Database**: `test`
+- **User**: `admin`
+- **Password**: `adminpassword`
+
+**B. Add to n8n**
+
+1. In n8n, go to **Settings** > **Credentials**
+2. Click **Add Credential** and search for **Postgres**
+3. Enter the connection details:
+   - **Host**: `postgres-db` ⚠️ **Critical**: Use the service name, not localhost or 127.0.0.1
+   - **Port**: `5432`
+   - **Database**: `test`
+   - **User**: `admin`
+   - **Password**: `adminpassword`
+   - **SSL**: Leave disabled (not needed for local Docker network)
+4. Click **Test** to verify connection
+   - ✅ You should see "Connection successful"
+   - ❌ If it fails, see troubleshooting below
+5. Give it a name (e.g., "Postgres account") and click **Save**
+
+**C. Assign to Workflow Nodes**
+
+The workflow has **6 PostgreSQL nodes** that all need credentials:
+
+1. Import or open the Text-to-SQL workflow
+2. Update each of these nodes:
+   - **list_all_tables** (green database icon)
+   - **get_table_schema_details** (green database icon)
+   - **execute_final_sql_query** (green database icon)
+   - **get_distinct_column_values** (green database icon)
+   - **get_table_row_count** (green database icon)
+   - **Postgres Chat Memory** (green database icon)
+3. For each node, click it and select your Postgres credential from the dropdown
+4. Save the workflow
+
+**Troubleshooting PostgreSQL:**
+- **"Connection refused"**: 
+  - Check PostgreSQL container is running: `docker ps | grep postgres-db`
+  - Verify you used `postgres-db` as host (NOT `localhost`)
+  - Ensure both containers are on backend-net: `docker network inspect n8n-workflows_backend-net`
+- **"FATAL: password authentication failed"**: 
+  - Double-check credentials match docker-compose.yaml
+  - Default is `admin` / `adminpassword`
+- **"Connection timeout"**: 
+  - PostgreSQL container may still be starting - wait 10 seconds and retry
+  - Check logs: `docker logs postgres-db`
+- **"Database 'test' does not exist"**:
+  - Run the setup script: `python setup_database.py`
+  - Or create manually: `docker exec -it postgres-db psql -U admin -c "CREATE DATABASE test;"`
+
+**Testing the Connection**
+
+You can manually test the connection from within the n8n container:
+
+```bash
+# Test from n8n container
+docker exec n8n psql -h postgres-db -p 5432 -U admin -d test -c "SELECT 1;"
+```
+
+If successful, you should see a result. If it fails, troubleshoot the network connection.
+
+---
+
+**3. Activate the Workflow**
+
+After both credentials are configured and assigned to all nodes:
+
+1. In the workflow editor, toggle the **Active** switch in the top-right corner
+2. The switch should turn green
+3. The workflow is now ready to receive chat messages
 
 ---
 

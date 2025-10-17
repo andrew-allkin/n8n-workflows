@@ -28,24 +28,67 @@ Before using this workflow, you need:
 
 ### 1. Configure Gmail Credentials
 
-You need to set up Google OAuth2 credentials in n8n:
+This workflow requires **Gmail OAuth2** credentials to access your Gmail account and perform delete operations.
 
-1. Go to **Settings** > **Credentials** in your n8n instance
-2. Click **Create New Credential**
-3. Select **Google OAuth2 API**
-4. Follow these steps:
-   - Create a project in [Google Cloud Console](https://console.cloud.google.com/)
-   - Enable the **Gmail API** for your project
-   - Create OAuth 2.0 credentials (Client ID and Client Secret)
-   - Add authorized redirect URIs (your n8n OAuth callback URL)
-   - Copy the Client ID and Client Secret to n8n
-   - Authorize access to your Gmail account
+#### Step-by-Step Credential Setup:
 
-For detailed instructions, refer to the [n8n Google credentials documentation](https://docs.n8n.io/integrations/builtin/credentials/google/).
+**A. Create Google Cloud Project & Enable Gmail API**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** > **Library**
+4. Search for "Gmail API" and click **Enable**
+
+**B. Create OAuth 2.0 Credentials**
+
+1. Go to **APIs & Services** > **Credentials**
+2. Click **Create Credentials** > **OAuth client ID**
+3. If prompted, configure the OAuth consent screen:
+   - Select **External** user type (unless you have a Google Workspace)
+   - Fill in app name, user support email, and developer contact
+   - Add scopes: `https://www.googleapis.com/auth/gmail.modify` (or broader Gmail scopes)
+   - Add your email as a test user
+   - Save and continue
+4. Back on the Credentials page, click **Create Credentials** > **OAuth client ID**
+5. Select **Web application** as application type
+6. Add authorized redirect URIs:
+   - For local n8n: `http://localhost:5678/rest/oauth2-credential/callback`
+   - For cloud n8n: `https://your-n8n-url.com/rest/oauth2-credential/callback`
+7. Click **Create** and save your **Client ID** and **Client Secret**
+
+**C. Configure in n8n**
+
+1. Open n8n at http://localhost:5678
+2. Go to **Settings** > **Credentials** (or click the credentials icon in the sidebar)
+3. Click **Add Credential** and search for **Google OAuth2 API**
+4. Enter your credentials:
+   - **Client ID**: Paste from Google Cloud Console
+   - **Client Secret**: Paste from Google Cloud Console
+   - **Auth URI**: `https://accounts.google.com/o/oauth2/auth` (default)
+   - **Token URI**: `https://oauth2.googleapis.com/token` (default)
+   - **Scopes**: `https://www.googleapis.com/auth/gmail.modify` (or use the default)
+5. Click **Connect my account** - this will open a Google authorization page
+6. Select your Google account and grant permissions to n8n
+7. Once authorized, you'll be redirected back to n8n
+8. Give your credential a memorable name (e.g., "Gmail account") and click **Save**
+
+**D. Verify Connection**
+
+Your credential should now show as connected with a green checkmark. If you see a red warning, check that:
+- The Gmail API is enabled in Google Cloud Console
+- Your redirect URI matches exactly (including http/https)
+- You've added your email as a test user if app is not published
+
+**Troubleshooting:**
+- **"Access blocked: This app's request is invalid"**: Check that your redirect URI in Google Cloud Console matches your n8n callback URL exactly
+- **"Error 403: access_denied"**: Ensure Gmail API is enabled and your email is added as a test user
+- **Token expired**: Re-authenticate by editing the credential and clicking "Connect my account" again
+
+For more details, see the [official n8n Google credentials documentation](https://docs.n8n.io/integrations/builtin/credentials/google/).
 
 ### 2. Import the Workflow
 
-1. Copy the contents of `Gmail Date Range Delete.json`
+1. Copy the contents of `n8n_workflow.json`
 2. In n8n, click **Add workflow** > **Import from File** or **Import from URL**
 3. Paste the workflow JSON
 
