@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-SQL Database Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.user .message-avatar {
+            background: #34c759;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #1d1d1f;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .message.user .message-content {
+            background: #007aff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .message-content pre {
+            background: #f5f5f7;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+
+        .message.user .message-content pre {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content code {
+            background: #f5f5f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .message.user .message-content code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .message.user .message-content strong {
+            color: white;
+        }
+
+        .message-content hr {
+            border: none;
+            border-top: 1px solid #e5e5ea;
+            margin: 16px 0;
+        }
+
+        .message.user .message-content hr {
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+            line-height: 1.6;
+        }
+
+        .message-content p {
+            margin: 8px 0;
+        }
+
+        .message-content h1, .message-content h2, .message-content h3 {
+            margin: 12px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #8e8e93;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e5ea;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e5ea;
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        #messageInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendButton {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #ff3b30;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #8e8e93;
+            padding: 40px 20px;
+        }
+
+        .welcome-message h2 {
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            font-size: 22px;
+        }
+
+        .welcome-examples {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .example-query {
+            background: white;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #667eea;
+            font-size: 14px;
+            border: 2px solid transparent;
+        }
+
+        .example-query:hover {
+            border-color: #667eea;
+            transform: translateX(4px);
+        }
+
+        /* Scrollbar styling */
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #c7c7cc;
+            border-radius: 4px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #aeaeb2;
+        }
+
+        /* Config panel */
+        .config-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .config-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .config-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .config-modal.active {
+            display: flex;
+        }
+
+        .config-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .config-content h2 {
+            margin-bottom: 20px;
+            color: #1d1d1f;
+        }
+
+        .config-content label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1d1d1f;
+            font-weight: 500;
+        }
+
+        .config-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e5ea;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .config-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .config-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .config-buttons button:hover {
+            transform: translateY(-2px);
+        }
+
+        .config-buttons .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .config-buttons .cancel-btn {
+            background: #e5e5ea;
+            color: #1d1d1f;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <button class="config-button" onclick="openConfig()">⚙️ Settings</button>
+            <h1>🗃️ Database Assistant</h1>
+            <p>Ask questions about your database in natural language</p>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="welcome-message">
+                <h2>👋 Welcome!</h2>
+                <p>I can help you query your database using natural language.<br>Try one of these examples:</p>
+                <div class="welcome-examples">
+                    <div class="example-query" onclick="sendExample(this)">Show me all customers from New York</div>
+                    <div class="example-query" onclick="sendExample(this)">What are the top 5 best-selling products?</div>
+                    <div class="example-query" onclick="sendExample(this)">Which customers have spent more than $500?</div>
+                    <div class="example-query" onclick="sendExample(this)">Show me monthly revenue trends and create a chart</div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar">🤖</div>
+                <div class="typing-dots">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Ask a question about your database..."
+                onkeypress="handleKeyPress(event)"
+            />
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Config Modal -->
+    <div class="config-modal" id="configModal">
+        <div class="config-content">
+            <h2>Configuration</h2>
+            <label for="webhookUrl">n8n Webhook URL:</label>
+            <input 
+                type="text" 
+                id="webhookUrl" 
+                placeholder="https://your-n8n-instance.com/webhook/..."
+            />
+            <div class="config-buttons">
+                <button class="cancel-btn" onclick="closeConfig()">Cancel</button>
+                <button class="save-btn" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let WEBHOOK_URL = localStorage.getItem('webhookUrl') || 'http://localhost:5678/webhook/46d771e0-b43f-427f-89db-eeae13573a3c/chat';
+        let sessionId = localStorage.getItem('sessionId') || generateSessionId();
+        localStorage.setItem('sessionId', sessionId);
+
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function openConfig() {
+            document.getElementById('webhookUrl').value = WEBHOOK_URL;
+            document.getElementById('configModal').classList.add('active');
+        }
+
+        function closeConfig() {
+            document.getElementById('configModal').classList.remove('active');
+        }
+
+        function saveConfig() {
+            WEBHOOK_URL = document.getElementById('webhookUrl').value.trim();
+            localStorage.setItem('webhookUrl', WEBHOOK_URL);
+            closeConfig();
+            
+            if (WEBHOOK_URL) {
+                addMessage('assistant', '✅ Configuration saved! You can now start asking questions.');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function sendExample(element) {
+            document.getElementById('messageInput').value = element.textContent;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            if (!WEBHOOK_URL) {
+                addMessage('assistant', '⚠️ Please configure your webhook URL first by clicking the Settings button.');
+                return;
+            }
+
+            // Clear welcome message if it exists
+            const welcome = document.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Disable send button
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+
+            try {
+                // Send to n8n webhook
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chatInput: message,
+                        sessionId: sessionId,
+                        action: 'sendMessage'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Extract the response text
+                let responseText = '';
+                if (data.output) {
+                    responseText = data.output;
+                } else if (data.message) {
+                    responseText = data.message;
+                } else if (typeof data === 'string') {
+                    responseText = data;
+                } else {
+                    responseText = JSON.stringify(data, null, 2);
+                }
+
+                // Add assistant response
+                addMessage('assistant', responseText);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('assistant', `❌ Error: ${error.message}\n\nPlease check:\n1. Your webhook URL is correct\n2. The n8n workflow is active\n3. Your network connection`);
+            } finally {
+                hideTypingIndicator();
+                sendButton.disabled = false;
+            }
+        }
+
+        function addMessage(type, content) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = type === 'user' ? '👤' : '🤖';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Parse markdown-style images and format content
+            const formattedContent = formatMessage(content);
+            contentDiv.innerHTML = formattedContent;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            
+            // Remove typing indicator from DOM flow for insertion
+            const typingIndicator = document.getElementById('typingIndicator');
+            container.insertBefore(messageDiv, typingIndicator);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function formatMessage(content) {
+            // Convert markdown images to HTML: ![alt](url) -> <img>
+            content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+            
+            // Convert markdown links to HTML: [text](url) -> <a>
+            content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            
+            // Convert markdown code blocks to HTML: ```code``` -> <pre><code>
+            content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            
+            // Convert inline code to HTML: `code` -> <code>
+            content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Convert markdown bold to HTML: **text** -> <strong>
+            content = content.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert markdown horizontal lines to HTML: --- -> <hr>
+            content = content.replace(/^---$/gm, '<hr>');
+            
+            // Convert markdown headers to HTML: ## Text -> <h2>
+            content = content.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            content = content.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            content = content.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            
+            // Convert newlines to <br>
+            content = content.replace(/\n/g, '<br>');
+            
+            // Auto-detect image URLs that aren't in markdown format
+            content = content.replace(/(https?:\/\/[^\s<]+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s<]*)?)/gi, 
+                '<img src="$1" alt="Chart" />');
+            
+            return content;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('active');
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        // Show config modal on first load if no webhook URL is set
+        window.addEventListener('load', () => {
+            if (!WEBHOOK_URL) {
+                setTimeout(openConfig, 500);
+            }
+        });
+    </script>
+</body>
+</html>
+

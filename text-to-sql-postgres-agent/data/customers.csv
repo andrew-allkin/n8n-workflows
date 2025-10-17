@@ -1,0 +1,27 @@
+customer_id,name,email,phone,city,state,country,created_at
+1,John Smith,john.smith@email.com,555-0101,New York,NY,USA,2024-01-15
+2,Emily Johnson,emily.j@email.com,555-0102,Los Angeles,CA,USA,2024-01-20
+3,Michael Brown,m.brown@email.com,555-0103,Chicago,IL,USA,2024-02-01
+4,Sarah Davis,sarah.d@email.com,555-0104,Houston,TX,USA,2024-02-05
+5,David Wilson,d.wilson@email.com,555-0105,Phoenix,AZ,USA,2024-02-10
+6,Jennifer Garcia,j.garcia@email.com,555-0106,Philadelphia,PA,USA,2024-02-15
+7,Robert Martinez,rob.m@email.com,555-0107,San Antonio,TX,USA,2024-02-20
+8,Linda Rodriguez,linda.r@email.com,555-0108,San Diego,CA,USA,2024-03-01
+9,William Lee,w.lee@email.com,555-0109,Dallas,TX,USA,2024-03-05
+10,Lisa Anderson,lisa.a@email.com,555-0110,San Jose,CA,USA,2024-03-10
+11,James Taylor,james.t@email.com,555-0111,Austin,TX,USA,2024-03-15
+12,Karen Thomas,karen.t@email.com,555-0112,Jacksonville,FL,USA,2024-03-20
+13,Christopher Jackson,chris.j@email.com,555-0113,Fort Worth,TX,USA,2024-04-01
+14,Nancy White,nancy.w@email.com,555-0114,Columbus,OH,USA,2024-04-05
+15,Daniel Harris,dan.h@email.com,555-0115,Charlotte,NC,USA,2024-04-10
+16,Betty Martin,betty.m@email.com,555-0116,San Francisco,CA,USA,2024-04-15
+17,Matthew Thompson,matt.t@email.com,555-0117,Indianapolis,IN,USA,2024-04-20
+18,Sandra Garcia,sandra.g@email.com,555-0118,Seattle,WA,USA,2024-05-01
+19,Anthony Martinez,anthony.m@email.com,555-0119,Denver,CO,USA,2024-05-05
+20,Ashley Robinson,ashley.r@email.com,555-0120,Boston,MA,USA,2024-05-10
+21,Mark Clark,mark.c@email.com,555-0121,Detroit,MI,USA,2024-05-15
+22,Donna Lewis,donna.l@email.com,555-0122,Nashville,TN,USA,2024-05-20
+23,Paul Walker,paul.w@email.com,555-0123,Portland,OR,USA,2024-06-01
+24,Carol Hall,carol.h@email.com,555-0124,Las Vegas,NV,USA,2024-06-05
+25,Steven Allen,steven.a@email.com,555-0125,Memphis,TN,USA,2024-06-10
+

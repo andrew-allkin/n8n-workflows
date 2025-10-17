@@ -1,0 +1,27 @@
+product_id,product_name,category,price,stock_quantity,supplier,sku
+1,Wireless Mouse,Electronics,29.99,150,TechSupplier Inc,WM-001
+2,Mechanical Keyboard,Electronics,89.99,75,TechSupplier Inc,MK-002
+3,USB-C Cable,Electronics,12.99,300,TechSupplier Inc,UC-003
+4,Laptop Stand,Accessories,45.99,100,OfficeGear Co,LS-004
+5,Webcam HD,Electronics,69.99,50,TechSupplier Inc,WC-005
+6,Desk Lamp,Furniture,34.99,120,HomeStyle Ltd,DL-006
+7,Ergonomic Chair,Furniture,299.99,30,OfficeGear Co,EC-007
+8,Monitor 27inch,Electronics,349.99,45,TechSupplier Inc,MN-008
+9,Wireless Headphones,Electronics,129.99,80,AudioTech Inc,WH-009
+10,Phone Stand,Accessories,19.99,200,OfficeGear Co,PS-010
+11,External SSD 1TB,Electronics,119.99,60,TechSupplier Inc,ES-011
+12,Mouse Pad,Accessories,14.99,250,OfficeGear Co,MP-012
+13,Desk Organizer,Accessories,24.99,150,HomeStyle Ltd,DO-013
+14,Bluetooth Speaker,Electronics,79.99,90,AudioTech Inc,BS-014
+15,Laptop Backpack,Accessories,59.99,110,TravelGear Co,LB-015
+16,Webcam Cover,Accessories,7.99,400,TechSupplier Inc,WCV-016
+17,HDMI Cable,Electronics,15.99,180,TechSupplier Inc,HC-017
+18,Notebook Set,Stationery,22.99,200,PaperPro Inc,NB-018
+19,Pen Set Premium,Stationery,29.99,175,PaperPro Inc,PS-019
+20,Desk Calendar,Stationery,18.99,140,PaperPro Inc,DC-020
+21,Wireless Charger,Electronics,39.99,95,TechSupplier Inc,WCH-021
+22,Cable Management Box,Accessories,16.99,160,OfficeGear Co,CMB-022
+23,Standing Desk Converter,Furniture,199.99,35,OfficeGear Co,SDC-023
+24,LED Monitor Light,Electronics,49.99,85,TechSupplier Inc,LML-024
+25,Footrest,Furniture,32.99,70,OfficeGear Co,FR-025
+

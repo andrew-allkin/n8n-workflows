@@ -1,0 +1,30 @@
+order_id,customer_id,order_date,total_amount,status,shipping_address,payment_method
+1,1,2024-06-01,159.97,delivered,123 Main St New York NY,credit_card
+2,2,2024-06-02,89.99,delivered,456 Oak Ave Los Angeles CA,paypal
+3,3,2024-06-03,474.96,delivered,789 Pine Rd Chicago IL,credit_card
+4,1,2024-06-05,129.99,delivered,123 Main St New York NY,credit_card
+5,4,2024-06-06,249.98,delivered,321 Elm St Houston TX,debit_card
+6,5,2024-06-08,369.98,shipped,654 Maple Dr Phoenix AZ,credit_card
+7,6,2024-06-10,79.99,delivered,987 Cedar Ln Philadelphia PA,paypal
+8,7,2024-06-12,199.99,delivered,147 Birch Way San Antonio TX,credit_card
+9,2,2024-06-14,94.98,delivered,456 Oak Ave Los Angeles CA,paypal
+10,8,2024-06-15,459.97,shipped,258 Walnut Ct San Diego CA,credit_card
+11,9,2024-06-17,119.99,delivered,369 Spruce St Dallas TX,debit_card
+12,10,2024-06-19,174.97,delivered,741 Ash Blvd San Jose CA,credit_card
+13,11,2024-06-20,299.99,processing,852 Willow Ave Austin TX,paypal
+14,3,2024-06-22,229.98,delivered,789 Pine Rd Chicago IL,credit_card
+15,12,2024-06-24,149.98,shipped,963 Poplar Dr Jacksonville FL,debit_card
+16,13,2024-06-25,89.99,delivered,159 Cherry Ln Fort Worth TX,credit_card
+17,14,2024-06-27,384.97,delivered,357 Hickory St Columbus OH,paypal
+18,15,2024-06-28,199.99,shipped,468 Sycamore Rd Charlotte NC,credit_card
+19,16,2024-06-30,549.97,delivered,579 Magnolia Ave San Francisco CA,credit_card
+20,17,2024-07-01,159.98,delivered,681 Dogwood Ct Indianapolis IN,debit_card
+21,18,2024-07-03,269.97,processing,792 Redwood Dr Seattle WA,paypal
+22,19,2024-07-05,119.99,delivered,813 Fir St Denver CO,credit_card
+23,20,2024-07-07,429.97,shipped,924 Palm Ln Boston MA,credit_card
+24,21,2024-07-09,74.98,delivered,135 Cypress Way Detroit MI,debit_card
+25,22,2024-07-10,339.98,delivered,246 Juniper Rd Nashville TN,credit_card
+26,23,2024-07-12,249.98,processing,357 Sequoia Blvd Portland OR,paypal
+27,24,2024-07-14,189.98,delivered,468 Cottonwood Ave Las Vegas NV,credit_card
+28,25,2024-07-15,299.99,shipped,579 Mesquite St Memphis TN,debit_card
+
