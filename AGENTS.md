@@ -56,12 +56,19 @@ This is an **n8n-workflows** repository that serves as a centralized collection 
 
 ### Database Setup Scripts
 - If a project requires PostgreSQL, **ALWAYS create a `setup_database.py` script** in the project folder
-- The setup script must:
-  - Use the hardcoded connection details specified above
-  - Create necessary tables with proper schemas
-  - Include sample data insertion (if applicable)
-  - Handle database initialization gracefully (check if tables exist, etc.)
-  - Include clear print statements showing setup progress
+- **CRITICAL: The setup script MUST be MINIMAL**
+- The setup script must ONLY contain:
+  - Database connection code using hardcoded credentials
+  - SQL statements to create tables
+  - SQL statements to insert necessary data
+- The setup script must NOT include:
+  - Database existence checks
+  - Connection validation logic
+  - Complex error handling
+  - Any other non-essential code
+- **NO .sql files allowed** - all table creation and data insertion must be done in the Python script
+- Use simple, direct SQL execution with psycopg2 or similar libraries
+- Include basic print statements to show setup progress
 
 **Example connection string:**
 ```python
@@ -108,6 +115,11 @@ port="5432"
   - Validating workflow configurations
 - The MCP server provides tools for workflow validation, node information, and template management
 - Never manually edit workflow JSON without using MCP tools to validate
+
+### Code Node Requirements
+- **ALWAYS use Python as the language for all Code nodes in n8n workflows**
+- Never use JavaScript for Code nodes
+- This ensures consistency across all workflows in the repository
 
 ### Workflow JSON Files
 - **ALWAYS store a copy of the workflow JSON** in a file within the project folder
@@ -229,8 +241,10 @@ When creating a new workflow project, ensure:
 - No additional markdown files created (except AI prompt files)
 - If AI nodes used: Prompt markdown files created and match n8n node configuration
 - No emojis in any AI system or user prompts
-- If PostgreSQL needed: `setup_database.py` script created with hardcoded credentials
+- If PostgreSQL needed: MINIMAL `setup_database.py` script created (only table creation and data insertion)
+- No .sql files (all database setup done in Python script)
 - If Python needed: `venv` folder and `requirements.txt` file created
+- All Code nodes in n8n workflow use Python (not JavaScript)
 - Workflow JSON file (`n8n_workflow.json`) saved in the folder
 - Required n8n credentials clearly documented in README.md
 - Used n8n MCP server tools to validate workflow configuration
@@ -253,6 +267,9 @@ When creating a new workflow project, ensure:
 10. Including emojis in AI system or user prompts
 11. Not creating prompt markdown files for AI nodes
 12. Creating project-specific `.gitignore` files
+13. Creating .sql files for database setup (use Python script only)
+14. Adding unnecessary checks and validation to setup_database.py script (keep it MINIMAL)
+15. Using JavaScript in Code nodes instead of Python
 
 ---
 
@@ -277,6 +294,8 @@ When creating a new workflow project, ensure:
 - Implement error handling in workflows
 - Test workflows thoroughly before committing
 - Keep AI prompts clean and emoji-free
+- Always use Python for Code nodes (never JavaScript)
+- Keep database setup scripts minimal and focused
 
 ### AI Prompt Engineering
 - Store all prompts in dedicated markdown files
