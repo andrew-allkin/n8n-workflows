@@ -183,9 +183,7 @@
       }
     },
     {
-      "parameters": {
-        "contextWindowLength": 15
-      },
+      "parameters": {},
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
@@ -327,7 +325,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "090539c3-d9d0-4a40-b79e-098aa7e6b8e0",
+  "versionId": "71317b9f-2b4e-4fe8-8100-df025eedb70c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "18375a03649092e3bfcdb9e2ec29598b60dd0d2fd1167150aa9b0af170f2f4f3"
