@@ -89,7 +89,7 @@ docker-compose up -d
 This starts PostgreSQL with:
 - **Host:** localhost
 - **Port:** 5432
-- **Database:** test
+- **Database:** n8n_workflows_data
 - **User:** admin
 - **Password:** adminpassword
 
@@ -177,7 +177,7 @@ The workflow needs access to your PostgreSQL database to execute queries.
 Since both n8n and PostgreSQL run in Docker with the shared `backend-net` network:
 - **Host**: `postgres-db` (the service name, NOT localhost)
 - **Port**: `5432`
-- **Database**: `test`
+- **Database**: `n8n_workflows_data`
 - **User**: `admin`
 - **Password**: `adminpassword`
 
@@ -188,7 +188,7 @@ Since both n8n and PostgreSQL run in Docker with the shared `backend-net` networ
 3. Enter the connection details:
    - **Host**: `postgres-db` ⚠️ **Critical**: Use the service name, not localhost or 127.0.0.1
    - **Port**: `5432`
-   - **Database**: `test`
+   - **Database**: `n8n_workflows_data`
    - **User**: `admin`
    - **Password**: `adminpassword`
    - **SSL**: Leave disabled (not needed for local Docker network)
@@ -223,9 +223,9 @@ The workflow has **6 PostgreSQL nodes** that all need credentials:
 - **"Connection timeout"**: 
   - PostgreSQL container may still be starting - wait 10 seconds and retry
   - Check logs: `docker logs postgres-db`
-- **"Database 'test' does not exist"**:
+- **"Database 'n8n_workflows_data' does not exist"**:
   - Run the setup script: `python setup_database.py`
-  - Or create manually: `docker exec -it postgres-db psql -U admin -c "CREATE DATABASE test;"`
+  - Or create manually: `docker exec -it postgres-db psql -U admin -c "CREATE DATABASE n8n_workflows_data;"`
 
 **Testing the Connection**
 
@@ -394,7 +394,7 @@ import psycopg2
 conn = psycopg2.connect(
     host='localhost',  # use 'postgres-db' if running inside Docker network
     port=5432,
-    database='test',
+    database='n8n_workflows_data',
     user='admin',
     password='adminpassword'
 )

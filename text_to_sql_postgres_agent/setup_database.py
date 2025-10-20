@@ -14,7 +14,7 @@ import os
 DB_CONFIG = {
     'host': 'localhost',
     'port': 5432,
-    'database': 'test',
+    'database': 'n8n_workflows_data',
     'user': 'admin',
     'password': 'adminpassword'
 }

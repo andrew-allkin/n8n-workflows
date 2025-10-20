@@ -22,7 +22,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: adminpassword
-      POSTGRES_DB: test
+      POSTGRES_DB: n8n_workflows_data
     ports:
       - "5432:5432"
     volumes:

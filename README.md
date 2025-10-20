@@ -90,7 +90,7 @@ The `docker-compose.yaml` in the root directory manages two core services:
 - **Image:** `postgres:16`
 - **Port:** 5432
 - **Volume:** `n8n_workflows_postgres_data` - Persists database data
-- **Database:** `test`
+- **Database:** `n8n_workflows_data`
 - **Credentials:** 
   - User: `admin`
   - Password: `adminpassword`
@@ -122,7 +122,7 @@ When configuring workflows that need database access:
 5. Enter connection details:
    - **Host:** `postgres-db` (the service name - containers communicate via backend-net)
    - **Port:** `5432`
-   - **Database:** `test`
+   - **Database:** `n8n_workflows_data`
    - **User:** `admin`
    - **Password:** `adminpassword`
 6. Click **Test** to verify connection
@@ -202,7 +202,7 @@ import psycopg2
 conn = psycopg2.connect(
     host='localhost',
     port=5432,
-    database='test',
+    database='n8n_workflows_data',
     user='admin',
     password='adminpassword'
 )
