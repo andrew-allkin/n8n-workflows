@@ -116,6 +116,17 @@ port="5432"
 - The MCP server provides tools for workflow validation, node information, and template management
 - Never manually edit workflow JSON without using MCP tools to validate
 
+### Workflow Creation and Editing Rules (MANDATORY)
+- **When a user asks to create or edit a workflow, you MUST do BOTH:**
+  1. **Use the n8n MCP to actually create or edit the workflow in n8n** (using tools like `n8n_create_workflow`, `n8n_update_full_workflow`, `n8n_update_partial_workflow`)
+  2. **Update the JSON workflow file in the repository** to keep it in sync
+- **DO NOT just edit the JSON file** - the workflow must be created/modified in n8n using MCP tools
+- **DO NOT just create/edit in n8n** - the JSON file must also be updated for version control
+- **Exception:** If the user asks for a plan or "how would it be done" (informational queries):
+  - Use the MCP to get information about nodes, templates, and best practices
+  - Do NOT physically create or edit workflows in n8n
+  - Provide the plan or explanation without making actual changes
+
 ### Code Node Requirements
 - **ALWAYS use Python as the language for all Code nodes in n8n workflows**
 - Never use JavaScript for Code nodes
@@ -245,7 +256,8 @@ When creating a new workflow project, ensure:
 - No .sql files (all database setup done in Python script)
 - If Python needed: `venv` folder and `requirements.txt` file created
 - All Code nodes in n8n workflow use Python (not JavaScript)
-- Workflow JSON file (`n8n_workflow.json`) saved in the folder
+- Workflow created in n8n using MCP tools (not just JSON file edits)
+- Workflow JSON file (`n8n_workflow.json`) saved in the folder and kept in sync with n8n
 - Required n8n credentials clearly documented in README.md
 - Used n8n MCP server tools to validate workflow configuration
 - All connection details match the docker-compose.yaml configuration
@@ -270,6 +282,8 @@ When creating a new workflow project, ensure:
 13. Creating .sql files for database setup (use Python script only)
 14. Adding unnecessary checks and validation to setup_database.py script (keep it MINIMAL)
 15. Using JavaScript in Code nodes instead of Python
+16. Only editing the JSON workflow file without using MCP to create/edit the workflow in n8n
+17. Only using MCP to create/edit in n8n without updating the JSON file in the repository
 
 ---
 
@@ -296,6 +310,8 @@ When creating a new workflow project, ensure:
 - Keep AI prompts clean and emoji-free
 - Always use Python for Code nodes (never JavaScript)
 - Keep database setup scripts minimal and focused
+- Always create/edit workflows using n8n MCP tools, then update the JSON file in the repository
+- Maintain synchronization between n8n workflows and repository JSON files
 
 ### AI Prompt Engineering
 - Store all prompts in dedicated markdown files
