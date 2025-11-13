@@ -1,0 +1,139 @@
+{
+  "name": "Gmail Auto-Label by Sender (Regex)",
+  "id": "3602DGXZZtv8Cg4i",
+  "nodes": [
+    {
+      "id": "gmail-trigger-001",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "event": "messageReceived",
+        "simple": true
+      }
+    },
+    {
+      "id": "postgres-get-patterns-002",
+      "name": "Get Label Patterns",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [450, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT pattern, gmail_label FROM sender_label_mapping ORDER BY id"
+      }
+    },
+    {
+      "id": "code-match-pattern-003",
+      "name": "Match Sender Pattern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "python",
+        "pythonCode": "import re\n\n# Get the sender email from Gmail trigger\nemail_data = _input.first().json\nsender_email = email_data.get('from', {}).get('address', '')\nemail_id = email_data.get('id', '')\n\n# Get patterns from database query\npatterns_data = _input.all()\nif len(patterns_data) > 1:\n    patterns = patterns_data[1].json\nelse:\n    patterns = []\n\nmatched_label = None\n\n# Try to match sender against each pattern\nfor pattern_row in patterns:\n    pattern = pattern_row.get('pattern', '')\n    label = pattern_row.get('gmail_label', '')\n    \n    # Use case-insensitive regex matching\n    if re.search(pattern, sender_email, re.IGNORECASE):\n        matched_label = label\n        break\n\nreturn {\n    'sender_email': sender_email,\n    'email_id': email_id,\n    'matched_label': matched_label,\n    'label_found': matched_label is not None\n}"
+      }
+    },
+    {
+      "id": "if-label-found-004",
+      "name": "Label Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.label_found }}",
+              "value2": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gmail-add-label-005",
+      "name": "Add Gmail Label",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1050, 200],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.email_id }}",
+        "labelIds": "={{ $json.matched_label }}"
+      }
+    },
+    {
+      "id": "noop-no-match-006",
+      "name": "No Label Match",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 400],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Label Patterns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Label Patterns": {
+      "main": [
+        [
+          {
+            "node": "Match Sender Pattern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Sender Pattern": {
+      "main": [
+        [
+          {
+            "node": "Label Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Found?": {
+      "main": [
+        [
+          {
+            "node": "Add Gmail Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Label Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "versionId": "f3b9dbcd-2462-4202-982b-6ff7ceaa54b4",
+  "createdAt": "2025-10-27T11:07:36.592Z",
+  "updatedAt": "2025-10-27T11:07:36.592Z",
+  "tags": []
+}

@@ -1,0 +1,8 @@
+# AI Reading Recommender - Python Dependencies
+
+# Database connectivity
+psycopg2-binary==2.9.9
+
+# Optional: For future enhancements
+# python-dotenv==1.0.0  # Load environment variables from .env file
+

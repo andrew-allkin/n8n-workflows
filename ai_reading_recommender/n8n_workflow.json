@@ -1,0 +1,517 @@
+{
+  "name": "AI Reading Recommender",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "When clicking Test workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "topic_input",
+              "name": "topic",
+              "value": "model context protocol",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set_topic",
+      "name": "Set Topic Here",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        304
+      ],
+      "notes": "Edit the 'topic' field above to specify what AI topic to search for.\n\nLeave empty for general AI search.\n\nExamples:\n- RAG retrieval augmented generation\n- AI agents\n- transformers\n- prompt engineering\n- diffusion models"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Get topic from input\nconst inputData = $input.first().json;\nconst topic = (inputData.topic || '').trim();\n\n// If no topic provided, select a general AI search\nlet searchMode, arxivQuery, devtoTag, hackernewsQuery;\n\nif (!topic) {\n  searchMode = 'general';\n  arxivQuery = 'cat:cs.AI OR cat:cs.LG AND (AI OR machine learning OR deep learning)';\n  devtoTag = 'ai';\n  hackernewsQuery = 'AI OR machine learning OR deep learning';\n  console.log('No specific topic provided. Using general AI search.');\n} else {\n  searchMode = 'specific';\n  console.log(`Searching for specific topic: ${topic}`);\n  arxivQuery = `cat:cs.AI OR cat:cs.LG AND (${topic})`;\n  devtoTag = topic.toLowerCase().replace(/ /g, '').substring(0, 20) || 'ai';\n  hackernewsQuery = topic;\n}\n\nreturn {\n  topic: topic || 'AI OR machine learning OR deep learning',\n  search_mode: searchMode,\n  arxiv_query: arxivQuery,\n  devto_tag: devtoTag,\n  hackernews_query: hackernewsQuery\n};"
+      },
+      "id": "process_topic",
+      "name": "Process Topic Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://export.arxiv.org/api/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search_query",
+              "value": "={{ $json.arxiv_query }}"
+            },
+            {
+              "name": "sortBy",
+              "value": "relevance"
+            },
+            {
+              "name": "max_results",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "arxiv_search",
+      "name": "Search arXiv Papers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/api/articles",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "tag",
+              "value": "={{ $json.devto_tag }}"
+            },
+            {
+              "name": "per_page",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dev_to_search",
+      "name": "Search Dev.to Articles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.hackernews_query }}"
+            },
+            {
+              "name": "tags",
+              "value": "story"
+            },
+            {
+              "name": "hitsPerPage",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "hackernews_search",
+      "name": "Search HackerNews",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        448
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "merge_sources",
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const json = item.json;\n  let standardized = {};\n  \n  // Detect source and standardize\n  if (json.entry && json.entry.id) {\n    // arXiv format\n    standardized = {\n      title: json.entry.title ? json.entry.title.replace(/\\n/g, ' ').trim() : 'Untitled',\n      url: json.entry.id || json.entry.link?.href || '',\n      summary: json.entry.summary ? json.entry.summary.replace(/\\n/g, ' ').substring(0, 500) : '',\n      source: 'arXiv',\n      content_type: 'paper',\n      date_published: json.entry.published || new Date().toISOString(),\n      author: json.entry.author?.name || 'Unknown'\n    };\n  } else if (json.title && json.url && json.user) {\n    // Dev.to format\n    standardized = {\n      title: json.title,\n      url: json.url,\n      summary: json.description || json.title,\n      source: 'Dev.to',\n      content_type: 'article',\n      date_published: json.published_at || new Date().toISOString(),\n      author: json.user.name || 'Unknown',\n      reading_time_minutes: json.reading_time_minutes || null\n    };\n  } else if (json.objectID && json.url) {\n    // HackerNews format\n    standardized = {\n      title: json.title || json.story_title || 'Untitled',\n      url: json.url || `https://news.ycombinator.com/item?id=${json.objectID}`,\n      summary: json.title || '',\n      source: 'HackerNews',\n      content_type: 'article',\n      date_published: json.created_at || new Date().toISOString(),\n      author: json.author || 'Unknown'\n    };\n  } else {\n    // Generic fallback\n    standardized = {\n      title: json.title || 'Untitled',\n      url: json.url || json.link || '',\n      summary: json.summary || json.description || '',\n      source: 'Unknown',\n      content_type: 'article',\n      date_published: json.date || new Date().toISOString(),\n      author: json.author || 'Unknown'\n    };\n  }\n  \n  // Only add if we have a valid URL\n  if (standardized.url) {\n    results.push(standardized);\n  }\n}\n\nreturn results;"
+      },
+      "id": "standardize_format",
+      "name": "Standardize Data Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "mode": "list",
+          "value": "read_articles"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "get_read_articles",
+      "name": "Get Already Read Articles",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1712,
+        176
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QF0Q5xjvpOFhmdyy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// This node receives two inputs:\n// Input 0: New articles from \"Standardize Data Format\"\n// Input 1: Already read articles from database\n\nconst allItems = $input.all();\n\n// Separate the inputs\nconst newArticles = [];\nconst dbArticles = [];\n\nfor (const item of allItems) {\n  // Check pairedItem metadata to determine source\n  if (item.pairedItem) {\n    const paired = Array.isArray(item.pairedItem) ? item.pairedItem[0] : item.pairedItem;\n    if (paired.item === 0) {\n      newArticles.push(item);\n    } else {\n      dbArticles.push(item);\n    }\n  } else {\n    newArticles.push(item);\n  }\n}\n\n// Build set of already-read URLs from database\nconst readUrls = new Set();\nfor (const item of dbArticles) {\n  if (item.json.url) {\n    readUrls.add(item.json.url);\n  }\n}\n\nconsole.log(`Database has ${readUrls.size} already-read articles`);\nconsole.log(`Found ${newArticles.length} new articles from sources`);\n\n// Filter out articles that have already been read\nconst filtered = newArticles.filter(item => !readUrls.has(item.json.url));\n\nconsole.log(`After filtering: ${filtered.length} articles remain`);\n\nif (filtered.length === 0) {\n  throw new Error('All discovered articles have already been recommended. Try again later when new content is published.');\n}\n\nreturn filtered;"
+      },
+      "id": "filter_duplicates",
+      "name": "Filter Out Already Read",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an AI research assistant helping select the most interesting reading material about generative AI, LLMs, and related topics.\n\nYou will receive a list of articles, papers, and blog posts. Your task is to:\n1. Analyze each piece based on:\n   - Depth of insight and technical content\n   - Practical value and applicability\n   - Novelty of perspective or approach\n   - Writing quality and clarity\n   - Relevance to current AI developments\n\n2. Select THE SINGLE MOST INTERESTING piece that would be most valuable to read.\n\n3. Return ONLY a JSON object with this structure:\n{\n  \"selected_url\": \"the URL of the best article\",\n  \"reasoning\": \"2-3 sentences explaining why this is the best choice\",\n  \"estimated_reading_time\": \"estimated time in minutes as a number\"\n}\n\nBe decisive and pick the one that stands out most.",
+              "role": "system"
+            },
+            {
+              "content": "=Here are the articles to analyze:\n\n{{ $json.map((item, i) => `${i+1}. Title: ${item.title}\\nSource: ${item.source}\\nType: ${item.content_type}\\nURL: ${item.url}\\nSummary: ${item.summary}\\n`).join('\\n') }}\n\nPlease select the single most interesting piece."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "rank_articles",
+      "name": "AI Ranking",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1936,
+        320
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "h0DnVmjEK6TzUAMm",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "merge_for_extract",
+      "name": "Merge AI Output with Articles",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2090,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Get all items from merge node\nconst allItems = $input.all();\n\n// Separate AI response from filtered articles\nlet aiItem = null;\nconst filteredArticles = [];\n\nfor (const item of allItems) {\n  // AI response will have 'message' or 'response' field\n  if (item.json.message || item.json.response) {\n    aiItem = item;\n  } else {\n    // This is a filtered article\n    filteredArticles.push(item);\n  }\n}\n\nif (!aiItem) {\n  throw new Error('AI response not found in input');\n}\n\nif (filteredArticles.length === 0) {\n  throw new Error('No filtered articles available');\n}\n\n// Parse the AI response - handle both string and object content\nlet aiResponse = aiItem.json.message?.content || aiItem.json.response?.text || '';\n\nlet selection;\n\n// Check if aiResponse is already an object (parsed JSON)\nif (typeof aiResponse === 'object' && aiResponse !== null) {\n  selection = aiResponse;\n} else if (typeof aiResponse === 'string') {\n  try {\n    // Try to parse as JSON string\n    selection = JSON.parse(aiResponse);\n  } catch (e) {\n    // If not JSON, try to extract URL from text\n    const urlMatch = aiResponse.match(/https?:\\/\\/[^\\s\"]+/);\n    if (urlMatch) {\n      selection = {\n        selected_url: urlMatch[0],\n        reasoning: 'Selected by AI',\n        estimated_reading_time: 10\n      };\n    } else {\n      throw new Error(`Could not parse AI response: ${aiResponse}`);\n    }\n  }\n} else {\n  throw new Error(`Unexpected AI response type: ${typeof aiResponse}`);\n}\n\n// Normalize URL function\nfunction normalizeUrl(url) {\n  if (!url) return '';\n  return url.trim().toLowerCase().replace(/\\/$/, '');\n}\n\nconsole.log(`Looking for URL: ${selection.selected_url}`);\nconsole.log(`Available articles: ${filteredArticles.length}`);\n\n// Try exact match first\nlet selectedArticle = filteredArticles.find(item => item.json.url === selection.selected_url);\n\n// If exact match fails, try normalized URL matching\nif (!selectedArticle) {\n  const normalizedSelected = normalizeUrl(selection.selected_url);\n  selectedArticle = filteredArticles.find(item => \n    normalizeUrl(item.json.url || '') === normalizedSelected\n  );\n}\n\n// If still not found, try partial match (contains)\nif (!selectedArticle) {\n  const selectedUrlLower = selection.selected_url.toLowerCase();\n  selectedArticle = filteredArticles.find(item => {\n    const url = (item.json.url || '').toLowerCase();\n    return selectedUrlLower.includes(url) || url.includes(selectedUrlLower);\n  });\n}\n\n// If still not found, provide detailed error\nif (!selectedArticle) {\n  const availableUrls = filteredArticles.map(item => item.json.url).join('\\n- ');\n  throw new Error(\n    `Selected article not found in the list.\\n\\n` +\n    `AI selected: ${selection.selected_url}\\n\\n` +\n    `Available URLs (${filteredArticles.length}):\\n- ${availableUrls}\\n\\n` +\n    `This usually means the AI returned a URL that doesn't exactly match the discovered articles. ` +\n    `Try running the workflow again.`\n  );\n}\n\n// Combine article data with AI reasoning\nconst result = {...selectedArticle.json};\nresult.ai_reasoning = selection.reasoning;\nresult.estimated_reading_time = selection.estimated_reading_time || selectedArticle.json.reading_time_minutes;\nresult.date_recommended = new Date().toISOString();\n\nconsole.log(`Successfully selected: ${result.title}`);\n\nreturn [result];"
+      },
+      "id": "extract_selection",
+      "name": "Extract Selection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2310,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "mode": "list",
+          "value": "read_articles"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "url": "={{ $json.url }}",
+            "summary": "={{ $json.summary }}",
+            "source": "={{ $json.source }}",
+            "content_type": "={{ $json.content_type }}",
+            "date_published": "={{ $json.date_published }}",
+            "date_recommended": "={{ $json.date_recommended }}",
+            "author": "={{ $json.author }}",
+            "reading_time_minutes": "={{ $json.estimated_reading_time }}",
+            "notes": "={{ $json.ai_reasoning }}",
+            "is_read": false
+          }
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "id": "save_to_db",
+      "name": "Save Recommendation to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2432,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QF0Q5xjvpOFhmdyy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const article = $input.first().json;\n\n// Format the date_published\nlet formattedDate;\ntry {\n  const dateObj = new Date(article.date_published);\n  formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });\n} catch (e) {\n  formattedDate = article.date_published;\n}\n\n// Format the date_recommended\nlet formattedDateRec;\ntry {\n  const dateRecObj = new Date(article.date_recommended);\n  formattedDateRec = dateRecObj.toLocaleString('en-US', { \n    year: 'numeric', \n    month: 'long', \n    day: 'numeric',\n    hour: 'numeric',\n    minute: '2-digit',\n    hour12: true\n  });\n} catch (e) {\n  formattedDateRec = article.date_recommended;\n}\n\nconst readingTime = article.estimated_reading_time || 'Unknown';\n\nconst output = `AI READING RECOMMENDATION\n\nTitle: ${article.title || 'Untitled'}\n\nURL: ${article.url || ''}\n\nSource: ${article.source || 'Unknown'} | Type: ${article.content_type || 'article'}\n\nAuthor: ${article.author || 'Unknown'}\n\nEstimated Reading Time: ${readingTime} minutes\n\nPublished: ${formattedDate}\n\nSummary:\n${article.summary || 'No summary available.'}\n\nWhy This Was Selected:\n${article.ai_reasoning || 'Selected by AI based on relevance and quality.'}\n\n---\nRecommended on: ${formattedDateRec}\n`;\n\nreturn {\n  message: output,\n  article: article\n};"
+      },
+      "id": "format_output",
+      "name": "Format Recommendation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking Test workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Topic Here",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Topic Here": {
+      "main": [
+        [
+          {
+            "node": "Process Topic Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Topic Input": {
+      "main": [
+        [
+          {
+            "node": "Search arXiv Papers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Dev.to Articles",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search HackerNews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search arXiv Papers": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Dev.to Articles": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Search HackerNews": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge All Sources": {
+      "main": [
+        [
+          {
+            "node": "Standardize Data Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standardize Data Format": {
+      "main": [
+        [
+          {
+            "node": "Get Already Read Articles",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Out Already Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Already Read Articles": {
+      "main": [
+        [
+          {
+            "node": "Filter Out Already Read",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Filter Out Already Read": {
+      "main": [
+        [
+          {
+            "node": "AI Ranking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge AI Output with Articles",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI Ranking": {
+      "main": [
+        [
+          {
+            "node": "Merge AI Output with Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge AI Output with Articles": {
+      "main": [
+        [
+          {
+            "node": "Extract Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Selection": {
+      "main": [
+        [
+          {
+            "node": "Save Recommendation to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Recommendation to DB": {
+      "main": [
+        [
+          {
+            "node": "Format Recommendation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}
